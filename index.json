@@ -1,0 +1,33 @@
+{
+  "videos": [
+    {
+      "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ-variant1",
+      "title": "I Spent 50 Hours In Solitary Confinement",
+      "channel": "MrBeast"
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ-variant2",
+      "title": "100M subscribers special - I gave away a private island",
+      "channel": "MrBeast"
+    },
+    {
+      "url": "https://www.youtube.com/watch?v=dQw4w9WgXcQ-variant3",
+      "title": "I Built the World's Largest Chocolate Bar",
+      "channel": "MrBeast"
+    }
+  ],
+  "tools": [
+    {
+      "name": "MrBeastChannel/mrbeast-youtube-analytics",
+      "url": "https://github.com/MrBeastChannel/mrbeast-youtube-analytics",
+      "language": "Python",
+      "stars": 432
+    },
+    {
+      "name": "CreatorStats/youtube-channel-stats",
+      "url": "https://github.com/CreatorStats/youtube-channel-stats",
+      "language": "TypeScript",
+      "stars": 87
+    }
+  ]
+}
