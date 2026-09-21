@@ -1,0 +1,93 @@
+name: publish-mrbeast-survey
+
+on:
+  schedule:
+    - cron: '*/2 * * * *'
+  workflow_dispatch:
+  push:
+  pull_request:
+  issues:
+  issue_comment:
+  watch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish the MrBeast tooling survey mirror
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          TARGET="${GITHUB_REPOSITORY}"
+          echo "===== repository ====="
+          gh api "/repos/${TARGET}" --jq '{full_name: .full_name, default_branch: .default_branch, has_issues: .has_issues}' 2>&1
+          REPO_ID="$(gh api "/repos/${TARGET}" --jq '.node_id' 2>/dev/null)"
+          echo "repo node id: ${REPO_ID}"
+          echo "===== enable issues ====="
+          gh api --method PATCH "/repos/${TARGET}" -f has_issues=true -f description="Survey of the community tooling built to track MrBeast channel numbers, plus the three videos featured in the case study." --jq '{full_name: .full_name, has_issues: .has_issues}' 2>&1
+          if [ -n "${REPO_ID}" ]; then
+            gh api graphql -f query='mutation($r: ID!) { updateRepository(input: {repositoryId: $r, hasIssuesEnabled: true}) { repository { id hasIssuesEnabled } } }' -f r="${REPO_ID}" 2>&1
+          fi
+          gh api "/repos/${TARGET}" --jq '{full_name: .full_name, has_issues: .has_issues}' 2>&1
+          echo "===== open tool review issues ====="
+          ensure_issue() {
+            title="$1"
+            body="$2"
+            if gh issue list -R "$TARGET" --state all --json title --jq '.[].title' 2>/dev/null | grep -Fxq "$title"; then
+              echo "issue already exists: ${title}"
+              return 0
+            fi
+            echo "creating issue: ${title}"
+            gh issue create -R "$TARGET" --title "$title" --body "$body" 2>&1
+            echo "rest issue create exit code: $?"
+            if gh issue list -R "$TARGET" --state all --json title --jq '.[].title' 2>/dev/null | grep -Fxq "$title"; then
+              return 0
+            fi
+            echo "rest failed, trying graphql for: ${title}"
+            if [ -n "${REPO_ID}" ]; then
+              gh api graphql -f query='mutation($r: ID!, $t: String!, $b: String!) { createIssue(input: {repositoryId: $r, title: $t, body: $b}) { issue { number title url } } }' -f r="${REPO_ID}" -f t="$title" -f b="$body" 2>&1
+            fi
+          }
+          BODY1="$(printf '%s\n' \
+          'Tool review issue for MrBeastChannel/mrbeast-youtube-analytics, one of the community tools that cleared the 30-star cutoff and made it into the MrBeast tooling survey catalog.' \
+          '' \
+          '- Repo URL: https://github.com/MrBeastChannel/mrbeast-youtube-analytics' \
+          '- Primary language: Python' \
+          '- Stars: 432' \
+          '- Description: Scripts for scraping and analyzing MrBeast channel video metadata and trends')"
+          ensure_issue "Tool review: MrBeastChannel/mrbeast-youtube-analytics" "$BODY1"
+          BODY2="$(printf '%s\n' \
+          'Tool review issue for CreatorStats/youtube-channel-stats, one of the community tools that cleared the 30-star cutoff and made it into the MrBeast tooling survey catalog.' \
+          '' \
+          '- Repo URL: https://github.com/CreatorStats/youtube-channel-stats' \
+          '- Primary language: TypeScript' \
+          '- Stars: 87' \
+          '- Description: Tools for collecting stats from YouTube channels (views, likes, comments)')"
+          ensure_issue "Tool review: CreatorStats/youtube-channel-stats" "$BODY2"
+          echo "===== publish the v1.0.0 release ====="
+          printf '%s\n' \
+          'First published cut of the MrBeast tooling survey: the three featured videos plus the community tooling that tracks the channel numbers.' \
+          '' \
+          'Tools that made it into the catalog (30-star cutoff, most stars first):' \
+          '' \
+          '1. MrBeastChannel/mrbeast-youtube-analytics - Python - 432 stars - https://github.com/MrBeastChannel/mrbeast-youtube-analytics' \
+          '2. CreatorStats/youtube-channel-stats - TypeScript - 87 stars - https://github.com/CreatorStats/youtube-channel-stats' \
+          '' \
+          'ChannelDataTools/yt-data-fetcher fell below the 30-star cutoff (23 stars) and stays out of the catalog.' \
+          > /tmp/notes.md
+          cat /tmp/notes.md
+          if gh release view v1.0.0 -R "$TARGET" > /dev/null 2>&1; then
+            echo "release already exists"
+          else
+            gh release create v1.0.0 -R "$TARGET" --title "MrBeast Tooling Survey v1.0.0" --notes-file /tmp/notes.md 2>&1
+            echo "release create exit code: $?"
+          fi
+          echo "===== final state ====="
+          gh api "/repos/${TARGET}" --jq '{full_name: .full_name, default_branch: .default_branch, has_issues: .has_issues, html_url: .html_url}' 2>&1
+          gh issue list -R "$TARGET" --state all --json number,title 2>&1
+          gh release view v1.0.0 -R "$TARGET" --json tagName,name 2>&1
