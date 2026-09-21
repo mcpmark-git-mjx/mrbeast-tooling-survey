@@ -1,1 +1,32 @@
-Hello World!
+# MrBeast Tooling Survey
+
+GitHub mirror of the MrBeast tooling survey for the creator-economy newsletter issue on the
+open-source tooling that has grown around the channel.
+
+- `mrbeast_tools.md` — the survey catalog: the three featured videos plus the community tools
+  that cleared the 30-star cutoff, ranked by star count (most stars first)
+- `index.json` — machine-readable version of the same survey (`videos` + `tools` arrays)
+
+Headline numbers: 3 videos, 2 tools in the catalog, 1 repository excluded for falling below
+the 30-star cutoff (ChannelDataTools/yt-data-fetcher, 23 stars).
+
+## Tool review entries
+
+Exactly one entry per catalog tool, titled `Tool review: <owner/name>`, carrying the tool's
+repo URL, primary language and star count:
+
+- Tool review: MrBeastChannel/mrbeast-youtube-analytics
+- Tool review: CreatorStats/youtube-channel-stats
+
+Nothing is opened for ChannelDataTools/yt-data-fetcher, since it fell below the 30-star
+cutoff and did not make it into the catalog.
+
+These entries are opened as pull requests rather than issues only because this repository's
+issue tracker is disabled: it is a fork of `octocat/Hello-World`, and GitHub answers every
+issue creation with `410 Issues has been disabled in this repository`. The `administration`
+permission needed to re-enable the tracker cannot be granted to a workflow token. Each
+entry's title and body carry exactly the content the issue would have carried, and each one
+adds a `reviews/<tool>.md` stub to work against.
+
+The release is tagged `v1.0.0` ("MrBeast Tooling Survey v1.0.0") and its notes name every
+tool that made it into the catalog.
